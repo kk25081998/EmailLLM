@@ -1,0 +1,15 @@
+{
+  "name": "calendar-assistant",
+  "version": "1.0.0",
+  "description": "AI-powered calendar assistant with Google Calendar integration",
+  "scripts": {
+    "setup": "node setup-env.js",
+    "dev": "docker-compose -f docker-compose.dev.yml up --build",
+    "start": "docker-compose up --build",
+    "stop": "docker-compose down",
+    "logs": "docker-compose logs -f"
+  },
+  "keywords": ["calendar", "ai", "google", "oauth", "docker"],
+  "author": "",
+  "license": "MIT"
+} 

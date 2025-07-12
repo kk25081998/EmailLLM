@@ -1,0 +1,408 @@
+# Calendar Assistant - Project Requirements
+
+## Project Overview
+Build a web-based calendar assistant that allows users to authenticate with Google Calendar, view their calendar data, and interact with an AI agent to manage their schedule.
+
+## Technical Stack
+- **Frontend**: React (web interface)
+- **Backend**: Node.js with Express.js
+- **Authentication**: Google OAuth 2.0 (GSuite/Google Workspace)
+- **APIs**: Google Calendar API, OpenAI API (or similar LLM)
+- **Database**: Not required for MVP (store tokens in memory/session)
+- **Deployment**: Local deployment via Docker containers
+- **Container Orchestration**: Docker Compose for multi-service setup
+
+## Core Features
+
+### 1. Authentication System
+**Acceptance Criteria:**
+- User can click "Sign in with Google" button
+- OAuth flow redirects to Google and back to app
+- Backend securely handles OAuth tokens
+- User session persists across browser sessions
+- User can sign out and tokens are cleared
+
+**Technical Requirements:**
+- Backend handles Google OAuth 2.0 flow
+- Store tokens securely on server (session/memory for MVP)
+- Frontend makes authenticated requests to backend
+- Request minimal required permissions: `calendar.readonly` and `calendar.events`
+- Handle authentication errors gracefully
+
+### 2. Calendar Data Display
+**Acceptance Criteria:**
+- Display user's calendar events in a readable format
+- Show events for current week by default
+- Include event title, date, time, and duration
+- Handle all-day events appropriately
+- Show loading states during data fetching
+
+**Technical Requirements:**
+- Backend fetches events from Google Calendar API
+- Frontend requests calendar data from backend API
+- Display events in chronological order
+- Handle timezone conversions properly
+- Implement basic error handling for API failures
+- Show empty state when no events exist
+
+### 3. Chat Interface
+**Acceptance Criteria:**
+- Simple chat UI with message input and conversation history
+- User can type messages and send them
+- AI responds with contextually relevant calendar information
+- Chat history persists during session
+- Clear visual distinction between user and AI messages
+
+**Technical Requirements:**
+- Frontend sends chat messages to backend API
+- Backend integrates with LLM API (OpenAI, Anthropic, etc.)
+- Backend passes calendar data as context to AI model
+- Handle API rate limits and errors on backend
+- Implement basic message validation
+
+### 4. AI Calendar Agent Capabilities
+**Acceptance Criteria:**
+- Agent can analyze calendar data and provide insights
+- Agent can draft emails for meeting scheduling
+- Agent can calculate time spent in meetings
+- Agent can suggest schedule optimizations
+- Agent responds conversationally and helpfully
+
+**Core Use Cases to Support:**
+1. **Meeting Analysis**: "How much time am I spending in meetings?"
+2. **Email Drafting**: "Write an email to schedule a meeting with [person]"
+3. **Schedule Optimization**: "How can I reduce my meeting time?"
+4. **Time Blocking**: "Help me block time for focused work"
+
+## Backend API Specification
+
+### Required Endpoints
+
+#### Authentication Routes
+- `GET /auth/google` - Initiate Google OAuth flow
+- `GET /auth/google/callback` - Handle OAuth callback
+- `POST /auth/logout` - Clear session and logout user
+- `GET /auth/status` - Check authentication status
+
+#### Calendar Routes
+- `GET /api/calendar/events` - Get user's calendar events
+- `GET /api/calendar/events?week=YYYY-MM-DD` - Get events for specific week
+
+#### Chat Routes
+- `POST /api/chat` - Send message to AI agent
+- `GET /api/chat/history` - Get chat history for session
+
+### Request/Response Examples
+
+#### Get Calendar Events
+```javascript
+GET /api/calendar/events
+Response: {
+  events: [
+    {
+      id: "event123",
+      title: "Team Meeting",
+      start: "2024-01-15T10:00:00Z",
+      end: "2024-01-15T11:00:00Z",
+      allDay: false
+    }
+  ]
+}
+```
+
+#### Chat with AI
+```javascript
+POST /api/chat
+Body: {
+  message: "How much time do I spend in meetings?"
+}
+Response: {
+  response: "Based on your calendar, you spend approximately 15 hours per week in meetings...",
+  timestamp: "2024-01-15T10:00:00Z"
+}
+```
+
+### Google Calendar Integration
+- Use Google Calendar API v3
+- Required OAuth scopes: `https://www.googleapis.com/auth/calendar.readonly`
+- Fetch events for current week initially
+- Handle pagination for large calendars
+- Respect API rate limits (1000 requests per 100 seconds)
+
+### AI Integration
+- Send calendar data as structured context to LLM
+- Include event summaries, durations, and patterns
+- Implement prompt engineering for calendar-specific tasks
+- Handle API timeouts and errors gracefully
+
+### Data Flow
+1. User clicks "Sign in" → Frontend redirects to backend OAuth endpoint
+2. Backend handles Google OAuth → Stores tokens in session
+3. Frontend requests calendar data → Backend fetches from Google Calendar API
+4. User sends chat message → Backend processes with calendar context via LLM
+5. Backend returns AI response → Frontend displays in chat interface
+
+### Security Considerations
+- Store OAuth tokens securely on backend (not in frontend)
+- Use HTTPS for all API communication
+- Implement CORS properly for frontend-backend communication
+- Validate all input on backend before processing
+- Use environment variables for all sensitive configuration
+
+## User Interface Requirements
+
+### Layout
+- Header with app title and sign-out button
+- Left sidebar: Calendar display (60% width)
+- Right sidebar: Chat interface (40% width)
+- Mobile-responsive design
+
+### Calendar View
+- Weekly view showing 7 days
+- Today clearly highlighted
+- Events displayed as cards with time and title
+- Scroll to navigate between weeks
+
+### Chat Interface
+- Message input at bottom
+- Scrollable conversation history
+- Loading indicator for AI responses
+- Error messages for failed requests
+
+## Success Metrics
+- User can successfully authenticate with Google
+- Calendar events load and display correctly
+- AI agent responds helpfully to calendar queries
+- User can get meeting insights and email drafts
+- Application handles errors without crashing
+
+## Out of Scope (V1)
+- Creating/editing calendar events
+- Multi-calendar support
+- Advanced calendar views (month, day)
+- Email sending functionality
+- Complex scheduling algorithms
+- Recurring event analysis
+- Integration with other productivity tools
+
+## Technical Considerations
+- Store minimal user data (only OAuth tokens)
+- Implement proper error boundaries
+- Use environment variables for API keys
+- Add basic logging for debugging
+- Ensure responsive design for mobile viewing
+
+## Development Timeline Estimate
+- **Docker Setup & Configuration**: 1 day
+- **Backend Setup & Authentication**: 2 days
+- **Calendar API Integration**: 1 day
+- **Frontend Development**: 2 days
+- **AI Agent Implementation**: 1 day
+- **Integration & Testing**: 1 day
+- **Total**: 8 days for MVP
+
+## Required Environment Variables
+
+### Root .env file
+```
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+OPENAI_API_KEY=your_openai_api_key
+SESSION_SECRET=random_session_secret_at_least_32_chars
+```
+
+### .env.example (Template)
+```
+GOOGLE_CLIENT_ID=your_google_client_id_here
+GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+OPENAI_API_KEY=your_openai_api_key_here
+SESSION_SECRET=generate_a_random_32_character_string
+```
+
+## Docker Configuration
+
+### Required Docker Files
+
+#### Backend Dockerfile
+```dockerfile
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 3001
+CMD ["npm", "start"]
+```
+
+#### Frontend Dockerfile
+```dockerfile
+FROM node:18-alpine as build
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:alpine
+COPY --from=build /app/build /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+#### Docker Compose Configuration
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - PORT=3001
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:3001
+```
+
+### Development vs Production Setup
+
+#### Development Mode (docker-compose.dev.yml)
+```yaml
+version: '3.8'
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - PORT=3001
+      - FRONTEND_URL=http://localhost:3000
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    command: npm run dev
+    
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_BACKEND_URL=http://localhost:3001
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    command: npm start
+```
+
+## Local Deployment Instructions
+
+### Prerequisites
+- Docker and Docker Compose installed
+- Google Cloud Console project with Calendar API enabled
+- OpenAI API key
+
+### Quick Start
+1. Clone the repository
+2. Copy environment template: `cp .env.example .env`
+3. Fill in your API keys in `.env`
+4. Run: `docker-compose up --build`
+5. Access application at `http://localhost:3000`
+
+### Development Mode
+```bash
+# Run in development mode with hot reload
+docker-compose -f docker-compose.dev.yml up --build
+```
+
+### Production Mode
+```bash
+# Run in production mode
+docker-compose up --build -d
+```
+```
+calendar-assistant/
+├── backend/
+│   ├── src/
+│   │   ├── routes/
+│   │   │   ├── auth.js
+│   │   │   ├── calendar.js
+│   │   │   └── chat.js
+│   │   ├── services/
+│   │   │   ├── googleCalendar.js
+│   │   │   └── aiService.js
+│   │   ├── middleware/
+│   │   │   └── auth.js
+│   │   └── app.js
+│   ├── package.json
+│   └── .env
+├── frontend/
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── Calendar.js
+│   │   │   ├── Chat.js
+│   │   │   └── Auth.js
+│   │   ├── services/
+│   │   │   └── api.js
+│   │   └── App.js
+│   ├── package.json
+│   └── .env
+└── README.md
+```
+
+## GitHub Repository Requirements
+- Clear README.md with Docker setup instructions
+- Environment variable documentation with .env.example
+- Docker installation and running instructions
+- API key setup guide for Google Cloud Console and OpenAI
+- Basic troubleshooting section for Docker issues
+- Instructions for development vs production modes
+- Port configuration and network setup details
+
+### README.md Must Include:
+```markdown
+# Calendar Assistant
+
+## Prerequisites
+- Docker & Docker Compose
+- Google Cloud Console project with Calendar API enabled
+- OpenAI API key
+
+## Quick Start
+1. Clone repository
+2. Copy .env.example to .env
+3. Fill in API keys in .env
+4. Run: docker-compose up --build
+5. Access at http://localhost:3000
+
+## Development Mode
+docker-compose -f docker-compose.dev.yml up --build
+
+## Troubleshooting
+- Ensure ports 3000 and 3001 are available
+- Check Docker logs: docker-compose logs
+- Verify API keys in .env file
+```
