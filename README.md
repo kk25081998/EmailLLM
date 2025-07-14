@@ -69,11 +69,8 @@ A web-based calendar assistant that allows users to authenticate with Google Cal
 git clone <repository-url>
 cd EmailLLM
 
-# Copy environment template
+# Copy environment template and add your own keys
 cp env.example .env
-
-# Run interactive setup (recommended)
-npm run setup
 
 # Or manually edit .env file with your credentials
 ```
@@ -89,6 +86,7 @@ npm run setup
    - Application type: Web application
    - Authorized redirect URI: `http://localhost:3001/auth/google/callback`
 5. Copy Client ID and Client Secret to `.env`
+6. If your app, is not published where the keys are generated, add your email in test user so you can actually test the app with that user
 
 #### OpenAI API Setup
 
@@ -101,17 +99,8 @@ npm run setup
 #### Development Mode (with hot reload)
 
 ```bash
-npm run dev
-# or
-docker-compose -f docker-compose.dev.yml up --build
-```
-
-#### Production Mode
-
-```bash
-npm start
-# or
-docker-compose up --build
+docker-compose -f docker-compose.dev.yml build --no-cache
+docker-compose -f docker-compose.dev.yml up
 ```
 
 ### 4. Access the Application
@@ -128,12 +117,6 @@ GOOGLE_CLIENT_ID=your_google_client_id_here
 GOOGLE_CLIENT_SECRET=your_google_client_secret_here
 OPENAI_API_KEY=your_openai_api_key_here
 SESSION_SECRET=generate_a_random_32_character_string
-
-# Optional (with defaults)
-FRONTEND_URL=http://localhost:3000
-BACKEND_URL=http://localhost:3001
-PORT=3001
-NODE_ENV=development
 ```
 
 ## 🛠️ API Endpoints
