@@ -9,7 +9,21 @@ class AIService {
 
   async generateResponse(message, calendarData = null) {
     try {
-      let systemPrompt = `You are a helpful calendar assistant. You help users manage their schedule, analyze their calendar data, and provide insights about their meetings and time management.`;
+      const currentDateTime = new Date();
+      // Convert UTC to CST (UTC-6)
+      const cstDateTime = currentDateTime;
+      
+      let systemPrompt = `You are a helpful calendar assistant. You help users manage their schedule, analyze their calendar data, and provide insights about their meetings and time management.
+
+Current time context:
+- Current date and time (CST): ${cstDateTime.toLocaleString('en-US', { timeZone: 'America/Chicago' })}
+- Day of week: ${cstDateTime.toLocaleString('en-US', { timeZone: 'America/Chicago', weekday: 'long' })}
+
+When responding to queries about meetings:
+- For "next meeting" queries: Look for the first meeting that starts after the current time above
+- For "today's meetings": Only include meetings on the current date
+- For "past meetings": Only include meetings that ended before the time
+- Always mention the time relative to now`;
 
       if (calendarData) {
         systemPrompt += `\n\nCurrent calendar context:
@@ -17,7 +31,7 @@ class AIService {
 - Meeting statistics: ${JSON.stringify(calendarData.stats || {}, null, 2)}
 - Recent events: ${JSON.stringify(calendarData.events?.slice(0, 5) || [], null, 2)}
 
-Use this calendar data to provide specific, personalized responses.`;
+Make sure to use this calendar data and the current CST time above to provide specific, personalized responses about upcoming meetings and schedule. When mentioning meeting times, always calculate the time difference from the current CST time shown above.`;
 
         // Add attendee information if available
         if (calendarData.attendees && calendarData.attendees.length > 0) {
