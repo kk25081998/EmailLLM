@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Send, MessageCircle, Trash2, BarChart3, Users, Bot, User } from 'lucide-react';
 import { chatAPI } from '../services/api';
 import LoadingSpinner from './LoadingSpinner';
+import './Chat.css';
 
 const Chat = () => {
     const [messages, setMessages] = useState([]);
@@ -36,7 +37,7 @@ const Chat = () => {
     };
 
     const handleSendMessage = async (e, messageOverride) => {
-        if(e) e.preventDefault();
+        if (e) e.preventDefault();
         const messageToSend = messageOverride || inputMessage.trim();
         if (!messageToSend || loading) return;
 
@@ -124,93 +125,63 @@ const Chat = () => {
     };
 
     const renderMessageContent = (content) => {
-      if (typeof content !== 'string') return null;
-      return content.split('\n').map((line, index) => (
-          <span key={index}>{line}<br/></span>
-      ));
+        if (typeof content !== 'string') return null;
+        return content.split('\n').map((line, index) => (
+            <span key={index}>{line}<br /></span>
+        ));
     };
 
     return (
-        <div style={{ 
-            height: '850px', 
-            maxHeight: '850px',
-            display: 'flex', 
-            flexDirection: 'column', 
-            backgroundColor: '#f0f4f8',
-            overflow: 'hidden' // Prevent outer container from scrolling
-        }}>
+        <div className="chat-container">
             {/* Header */}
-            <div style={{
-                padding: '1rem 1.5rem',
-                borderBottom: '1px solid #e2e8f0',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                backgroundColor: '#ffffff',
-                flexShrink: 0 // Prevent header from shrinking
-            }}>
-                <h2 style={{ margin: 0, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.75rem', fontSize: '1.25rem' }}>
-                    <MessageCircle size={24} color="#4f46e5" />
+            <div className="chat-header">
+                <h2 className="chat-header-title">
+                    <div className="chat-header-icon">
+                        <MessageCircle size={20} />
+                    </div>
                     AI Assistant
                 </h2>
-                <button
-                    className="btn btn-secondary"
-                    onClick={handleClearHistory}
-                    style={{ padding: '0.5rem', borderRadius: '50%', border: 'none', background: '#eef2ff', cursor: 'pointer' }}
-                    title="Clear chat history"
-                >
-                    <Trash2 size={18} color="#4f46e5" />
-                </button>
+                <div className="chat-header-actions">
+                    <button
+                        className="chat-clear-button"
+                        onClick={handleClearHistory}
+                        title="Clear chat history"
+                    >
+                        <Trash2 size={18} />
+                    </button>
+                </div>
             </div>
 
             {/* Messages Area */}
-            <div style={{
-                flex: 1,
-                overflowY: 'auto',
-                padding: '1.5rem',
-                minHeight: 0 // Critical for proper flex scrolling
-            }}>
+            <div className="chat-messages">
                 {messages.length === 0 && !loading ? (
-                    <div style={{ textAlign: 'center', color: '#64748b', marginTop: '4rem', padding: '0 2rem' }}>
-                        <MessageCircle size={56} style={{ marginBottom: '1.5rem', opacity: 0.3 }} />
-                        <h3 style={{fontSize: '1.2rem', fontWeight: 500}}>Start a conversation</h3>
-                        <p>Ask me anything about your schedule, emails, or meetings!</p>
+                    <div className="chat-empty-state">
+                        <MessageCircle size={56} className="chat-empty-icon" />
+                        <h3 className="chat-empty-title">Start a conversation</h3>
+                        <p className="chat-empty-description">Ask me anything about your schedule, emails, or meetings!</p>
                     </div>
                 ) : (
                     messages.map((message) => (
-                        <div key={message.id} style={{ marginBottom: '1.5rem' }}>
+                        <div key={message.id} className="chat-message">
                             {/* User Message */}
-                             {message.userMessage && (
-                                <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'flex-start', gap: '0.75rem' }}>
-                                    <div style={{
-                                        background: 'linear-gradient(to right, #4f46e5, #6366f1)',
-                                        color: 'white',
-                                        padding: '0.75rem 1.25rem',
-                                        borderRadius: '1.25rem 1.25rem 0.25rem 1.25rem',
-                                        maxWidth: '75%',
-                                        wordWrap: 'break-word',
-                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                                    }}>
+                            {message.userMessage && (
+                                <div className="chat-message-user">
+                                    <div className="chat-message-bubble chat-message-bubble-user">
                                         {renderMessageContent(message.userMessage)}
                                     </div>
-                                    <div style={{ flexShrink: 0, background: '#d1d5db', borderRadius: '50%', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><User size={20} color="#ffffff"/></div>
+                                    <div className="chat-message-avatar chat-message-avatar-user">
+                                        <User size={20} />
+                                    </div>
                                 </div>
                             )}
 
                             {/* AI Response */}
                             {(message.aiResponse || message.isTemp) && (
-                                <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'flex-start', gap: '0.75rem', marginTop: '1rem' }}>
-                                     <div style={{ flexShrink: 0, background: '#6366f1', borderRadius: '50%', padding: '0.5rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Bot size={20} color="#ffffff"/></div>
-                                    <div style={{
-                                        background: message.isError ? '#fee2e2' : '#ffffff',
-                                        color: message.isError ? '#b91c1c' : '#334155',
-                                        padding: '0.75rem 1.25rem',
-                                        borderRadius: '1.25rem 1.25rem 1.25rem 0.25rem',
-                                        maxWidth: '75%',
-                                        wordWrap: 'break-word',
-                                        lineHeight: '1.6',
-                                        boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1)'
-                                    }}>
+                                <div className="chat-message-ai">
+                                    <div className="chat-message-avatar chat-message-avatar-ai">
+                                        <Bot size={20} />
+                                    </div>
+                                    <div className={`chat-message-bubble chat-message-bubble-ai ${message.isError ? 'error' : ''}`}>
                                         {message.isTemp ? <LoadingSpinner size="small" text="Thinking..." /> : renderMessageContent(message.aiResponse)}
                                     </div>
                                 </div>
@@ -218,62 +189,44 @@ const Chat = () => {
                         </div>
                     ))
                 )}
-                {error && <div style={{ textAlign: 'center', color: '#b91c1c', marginTop: '1rem' }}>{error}</div>}
+                {error && <div className="chat-error">{error}</div>}
                 <div ref={messagesEndRef} />
             </div>
 
-            {/* Input Form */}
-            <div style={{ 
-                padding: '1rem 1.5rem', 
-                borderTop: '1px solid #e2e8f0', 
-                background: 'rgba(255, 255, 255, 0.8)', 
-                backdropFilter: 'blur(10px)',
-                flexShrink: 0 // Prevent input area from shrinking
-            }}>
+            {/* Input Area */}
+            <div className="chat-input-area">
                 {/* Quick Actions */}
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '1rem' }}>
+                <div className="chat-quick-actions">
                     {[
-                      { key: 'meetings', label: 'Meeting Time', icon: MessageCircle },
-                      { key: 'optimize', label: 'Optimize Schedule', icon: BarChart3 },
-                      // { key: 'attendees', label: 'Recent Attendees', icon: Users },
+                        { key: 'meetings', label: 'Meeting Time', icon: MessageCircle },
+                        { key: 'optimize', label: 'Optimize Schedule', icon: BarChart3 },
+                        // { key: 'attendees', label: 'Recent Attendees', icon: Users },
                     ].map(action => (
-                      <button
-                        key={action.key}
-                        className="btn btn-secondary"
-                        onClick={() => handleQuickActions(action.key)}
-                        style={{ padding: '0.5rem 1rem', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.5rem', borderRadius: '1rem', border: '1px solid #e2e8f0', background: '#f8fafc', cursor: 'pointer' }}
-                      >
-                        <action.icon size={14} />
-                        {action.label}
-                      </button>
+                        <button
+                            key={action.key}
+                            className="chat-quick-action"
+                            onClick={() => handleQuickActions(action.key)}
+                        >
+                            <action.icon size={14} />
+                            {action.label}
+                        </button>
                     ))}
                 </div>
-                <form onSubmit={handleSendMessage} style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+                <form onSubmit={handleSendMessage} className="chat-input-form">
                     <input
                         type="text"
                         value={inputMessage}
                         onChange={(e) => setInputMessage(e.target.value)}
                         placeholder="Type your message..."
-                        style={{
-                            flex: 1,
-                            padding: '0.75rem 1.25rem',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '1.5rem',
-                            fontSize: '1rem',
-                            outline: 'none',
-                            transition: 'border-color 0.2s',
-                        }}
-                        onFocus={(e) => e.target.style.borderColor = '#4f46e5'}
-                        onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
+                        className="chat-input"
                         disabled={loading}
                     />
                     <button
                         type="submit"
-                        className="btn btn-primary"
+                        className="chat-send-button"
                         disabled={!inputMessage.trim() || loading}
-                        style={{ padding: '0.85rem', borderRadius: '50%', background: '#4f46e5', border: 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' }}
                     >
-                        <Send size={20} color="white"/>
+                        <Send size={20} />
                     </button>
                 </form>
             </div>

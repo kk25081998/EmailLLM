@@ -12,7 +12,7 @@ class AIService {
       const currentDateTime = new Date();
       // Convert UTC to CST (UTC-6)
       const cstDateTime = currentDateTime;
-      
+
       let systemPrompt = `You are a helpful calendar assistant. You help users manage their schedule, analyze their calendar data, and provide insights about their meetings and time management.
 
 Current time context:
@@ -36,9 +36,9 @@ Make sure to use this calendar data and the current CST time above to provide sp
         // Add attendee information if available
         if (calendarData.attendees && calendarData.attendees.length > 0) {
           systemPrompt += `\n\nAvailable attendees for this week:
-${calendarData.attendees.map(attendee => 
-  `- ${attendee.displayName} (${attendee.email}) - ${attendee.meetings.length} meetings`
-).join('\n')}`;
+${calendarData.attendees.map(attendee =>
+            `- ${attendee.displayName} (${attendee.email}) - ${attendee.meetings.length} meetings`
+          ).join('\n')}`;
         }
       }
 
@@ -62,7 +62,7 @@ IMPORTANT: When users ask for email drafting, provide a complete, professional e
 If they mention a specific recipient, use that. If they mention recent meeting attendees, suggest drafting to those people. Always be conversational, helpful, and provide actionable advice.`;
 
       const response = await this.openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-4o",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: message }
@@ -83,7 +83,7 @@ If they mention a specific recipient, use that. If they mention recent meeting a
   async analyzeMeetings(calendarData) {
     try {
       let attendeeContext = '';
-      
+
       if (calendarData && calendarData.attendees) {
         attendeeContext = `\n\nAttendee Analysis:
 - Total unique attendees: ${calendarData.attendees.length}
@@ -125,10 +125,10 @@ If they mention a specific recipient, use that. If they mention recent meeting a
 
       const prompt = `Analyze the attendee patterns from your recent meetings:
 
-${calendarData.attendees.map(attendee => 
-  `- ${attendee.displayName} (${attendee.email}): ${attendee.meetings.length} meetings
+${calendarData.attendees.map(attendee =>
+        `- ${attendee.displayName} (${attendee.email}): ${attendee.meetings.length} meetings
   Recent meetings: ${attendee.meetings.slice(0, 3).map(m => m.title).join(', ')}`
-).join('\n\n')}
+      ).join('\n\n')}
 
 Provide insights about:
 1. Most frequent collaborators

@@ -24,13 +24,13 @@ const Calendar = () => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const weekStart = format(startOfWeek(currentWeek, { weekStartsOn: 1 }), 'yyyy-MM-dd');
       const [eventsResponse, statsResponse] = await Promise.all([
         calendarAPI.getEvents(weekStart),
         calendarAPI.getStats(weekStart)
       ]);
-      
+
       setEvents(eventsResponse.data.events);
       setStats(statsResponse.data.stats);
     } catch (error) {
@@ -107,13 +107,13 @@ const Calendar = () => {
 
     try {
       setEmailLoading(true);
-      
+
       // Create a message that includes the event context and purpose
       const attendees = selectedEvent.attendees.filter(a => !a.self);
       const attendeeList = attendees.map(a => `${a.displayName} (${a.email})`).join(', ');
-      
+
       const message = `Can you draft a professional email to the attendees of "${selectedEvent.title}" for ${emailPurpose}? The attendees are: ${attendeeList}. Please include a subject line and make it concise and professional.`;
-      
+
       const response = await chatAPI.sendMessage(message);
       setEmailDraft(response.data.response);
     } catch (error) {
@@ -137,26 +137,34 @@ const Calendar = () => {
       <div className="calendar-container">
         {/* Header */}
         <div className="calendar-header">
-          <h2>Calendar</h2>
+          <div className="calendar-header-content">
+            <h2>Calendar</h2>
+            <div className="calendar-week-display">
+              Week of {format(startOfWeek(currentWeek, { weekStartsOn: 1 }), 'MMM d, yyyy')}
+            </div>
+          </div>
           <div className="calendar-nav-buttons">
-            <button 
+            <button
               className="btn btn-secondary"
               onClick={() => navigateWeek(-1)}
               disabled={eventsLoading || statsLoading}
+              aria-label="Previous week"
             >
               ← Previous
             </button>
-            <button 
+            <button
               className="btn btn-secondary"
               onClick={() => setCurrentWeek(new Date())}
               disabled={eventsLoading || statsLoading}
+              aria-label="Go to current week"
             >
               Today
             </button>
-            <button 
+            <button
               className="btn btn-secondary"
               onClick={() => navigateWeek(1)}
               disabled={eventsLoading || statsLoading}
+              aria-label="Next week"
             >
               Next →
             </button>
@@ -166,28 +174,40 @@ const Calendar = () => {
         {/* Stats Summary */}
         <div className="calendar-stats-summary">
           {statsLoading ? (
-            <LoadingSpinner size="small" text="Loading statistics..." />
+            <div className="calendar-stats-loading">
+              {[...Array(5)].map((_, index) => (
+                <div key={index} className="calendar-stat-skeleton">
+                  <div className="skeleton-shimmer skeleton-value"></div>
+                  <div className="skeleton-shimmer skeleton-label"></div>
+                </div>
+              ))}
+            </div>
           ) : stats ? (
             <div className="calendar-stats-grid">
-              <div>
-                <strong>{stats.totalMeetings}</strong> meetings this week
+              <div className="calendar-stat-card">
+                <span className="calendar-stat-value">{stats.totalMeetings}</span>
+                <span className="calendar-stat-label">Meetings This Week</span>
               </div>
-              <div>
-                <strong>{stats.totalHours.toFixed(1)}</strong> hours in meetings
+              <div className="calendar-stat-card">
+                <span className="calendar-stat-value">{stats.totalHours.toFixed(1)}</span>
+                <span className="calendar-stat-label">Hours in Meetings</span>
               </div>
-              <div>
-                <strong>{stats.averageMeetingLength.toFixed(1)}</strong> avg hours per meeting
+              <div className="calendar-stat-card">
+                <span className="calendar-stat-value">{stats.averageMeetingLength.toFixed(1)}</span>
+                <span className="calendar-stat-label">Avg Hours per Meeting</span>
               </div>
-              <div>
-                <strong>{stats.uniqueAttendees}</strong> unique attendees
+              <div className="calendar-stat-card">
+                <span className="calendar-stat-value">{stats.uniqueAttendees}</span>
+                <span className="calendar-stat-label">Unique Attendees</span>
               </div>
-              <div>
-                <strong>{stats.averageAttendeesPerMeeting.toFixed(1)}</strong> avg attendees per meeting
+              <div className="calendar-stat-card">
+                <span className="calendar-stat-value">{stats.averageAttendeesPerMeeting.toFixed(1)}</span>
+                <span className="calendar-stat-label">Avg Attendees per Meeting</span>
               </div>
             </div>
           ) : (
             <div className="calendar-no-stats-message">
-              No statistics available
+              No statistics available for this week
             </div>
           )}
         </div>
@@ -196,7 +216,7 @@ const Calendar = () => {
         {error && (
           <div className="error">
             {error}
-            <button 
+            <button
               onClick={() => setError(null)}
               style={{ marginLeft: '1rem', background: 'none', border: 'none', color: 'inherit', cursor: 'pointer' }}
             >
@@ -205,56 +225,136 @@ const Calendar = () => {
           </div>
         )}
 
-        {/* Calendar Grid */}
-        <div className="calendar-grid-container">
+        {/* Calendar Views */}
+        <div className="calendar-views-container">
           {eventsLoading ? (
             <div className="calendar-loading-events-container">
               <LoadingSpinner size="medium" text="Loading events..." />
             </div>
           ) : (
-            <div className="calendar-week-grid">
-              {getWeekDays().map((day, index) => (
-                <div 
-                  key={index}
-                  className={`calendar-day-column ${isToday(day) ? 'calendar-today-column' : ''}`}
-                  aria-label={`${format(day, 'EEE, MMMM d')}`}
-                >
-                  {/* Day Header */}
-                  <div className="calendar-day-header">
-                    <div className="calendar-day-header-text">
-                      {format(day, 'EEE')}
-                    </div>
-                    <div className="calendar-day-header-date">
-                      {format(day, 'd')}
-                    </div>
-                  </div>
+            <div className="calendar-agenda-view">
+              <h3 className="calendar-view-title">📋 Meeting Agenda</h3>
+              <div className="calendar-agenda-sections">
+                {events.length > 0 ? (
+                  <>
+                    {/* Future Meetings Section */}
+                    {(() => {
+                      const now = new Date();
+                      const futureEvents = events
+                        .filter(event => new Date(event.start) >= now)
+                        .sort((a, b) => new Date(a.start) - new Date(b.start));
 
-                  {/* Events */}
-                  <div className="calendar-events-list">
-                    {getEventsForDay(day).map((event, eventIndex) => (
-                      <div 
-                        key={event.id}
-                        className="calendar-event-card"
-                        title={`${event.title} - ${formatTime(event.start)} - ${event.attendees.filter(a => !a.self).length} attendees`}
-                        onClick={() => handleEventClick(event)}
-                      >
-                        <div className="calendar-event-time">
-                          {formatTime(event.start)}
-                        </div>
-                        <div className="calendar-event-title">
-                          {event.title}
-                        </div>
-                        {event.attendees.filter(a => !a.self).length > 0 && (
-                          <div className="calendar-event-attendees-count">
-                            <Users size={10} />
-                            {event.attendees.filter(a => !a.self).length}
+                      return futureEvents.length > 0 ? (
+                        <div className="calendar-agenda-section">
+                          <h4 className="calendar-agenda-section-title">
+                            <span className="calendar-agenda-section-icon">🔮</span>
+                            Upcoming Meetings ({futureEvents.length})
+                          </h4>
+                          <div className="calendar-agenda-container">
+                            {futureEvents.map((event) => (
+                              <div
+                                key={event.id}
+                                className={`calendar-agenda-item ${isToday(new Date(event.start)) ? 'calendar-agenda-today' : ''}`}
+                                onClick={() => handleEventClick(event)}
+                              >
+                                <div className="calendar-agenda-item-time">
+                                  <div className="calendar-agenda-item-day">
+                                    {format(new Date(event.start), 'EEE')}
+                                  </div>
+                                  <div className="calendar-agenda-item-date">
+                                    {format(new Date(event.start), 'd')}
+                                  </div>
+                                  <div className="calendar-agenda-item-hour">
+                                    {formatTime(event.start)}
+                                  </div>
+                                </div>
+                                <div className="calendar-agenda-item-content">
+                                  <div className="calendar-agenda-item-title">
+                                    {event.title}
+                                  </div>
+                                  <div className="calendar-agenda-item-details">
+                                    <span className="calendar-agenda-item-attendees">
+                                      <Users size={12} />
+                                      {event.attendees.filter(a => !a.self).length} people
+                                    </span>
+                                    <span className="calendar-agenda-item-duration">
+                                      📍 {format(new Date(event.start), 'EEEE, MMMM d')}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="calendar-agenda-item-action">
+                                  <div className="calendar-agenda-item-arrow">→</div>
+                                </div>
+                              </div>
+                            ))}
                           </div>
-                        )}
-                      </div>
-                    ))}
+                        </div>
+                      ) : null;
+                    })()}
+
+                    {/* Past Meetings Section */}
+                    {(() => {
+                      const now = new Date();
+                      const pastEvents = events
+                        .filter(event => new Date(event.start) < now)
+                        .sort((a, b) => new Date(b.start) - new Date(a.start));
+
+                      return pastEvents.length > 0 ? (
+                        <div className="calendar-agenda-section">
+                          <h4 className="calendar-agenda-section-title">
+                            <span className="calendar-agenda-section-icon">📚</span>
+                            Past Meetings ({pastEvents.length})
+                          </h4>
+                          <div className="calendar-agenda-container">
+                            {pastEvents.map((event) => (
+                              <div
+                                key={event.id}
+                                className="calendar-agenda-item calendar-agenda-past"
+                                onClick={() => handleEventClick(event)}
+                              >
+                                <div className="calendar-agenda-item-time">
+                                  <div className="calendar-agenda-item-day">
+                                    {format(new Date(event.start), 'EEE')}
+                                  </div>
+                                  <div className="calendar-agenda-item-date">
+                                    {format(new Date(event.start), 'd')}
+                                  </div>
+                                  <div className="calendar-agenda-item-hour">
+                                    {formatTime(event.start)}
+                                  </div>
+                                </div>
+                                <div className="calendar-agenda-item-content">
+                                  <div className="calendar-agenda-item-title">
+                                    {event.title}
+                                  </div>
+                                  <div className="calendar-agenda-item-details">
+                                    <span className="calendar-agenda-item-attendees">
+                                      <Users size={12} />
+                                      {event.attendees.filter(a => !a.self).length} people
+                                    </span>
+                                    <span className="calendar-agenda-item-duration">
+                                      📍 {format(new Date(event.start), 'EEEE, MMMM d')}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="calendar-agenda-item-action">
+                                  <div className="calendar-agenda-item-arrow">→</div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      ) : null;
+                    })()}
+                  </>
+                ) : (
+                  <div className="calendar-agenda-empty">
+                    <div className="calendar-agenda-empty-icon">🎉</div>
+                    <div className="calendar-agenda-empty-title">No meetings this week!</div>
+                    <div className="calendar-agenda-empty-subtitle">Time to focus on deep work</div>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -267,7 +367,7 @@ const Calendar = () => {
                 <Users size={20} />
                 Meeting Details
               </h3>
-              
+
               <div className="calendar-meeting-details">
                 <h4>{selectedEvent.title}</h4>
                 <p>{format(new Date(selectedEvent.start), 'EEEE, MMMM d, yyyy')} at {formatTime(selectedEvent.start)}</p>
@@ -329,7 +429,7 @@ const Calendar = () => {
                 <Mail size={20} />
                 Draft Email to Attendees
               </h3>
-              
+
               {!emailDraft ? (
                 <div className="calendar-email-draft-form">
                   <div className="calendar-email-draft-form-item">
@@ -344,7 +444,7 @@ const Calendar = () => {
                       required
                     />
                   </div>
-                  
+
                   <div className="calendar-email-draft-form-actions">
                     <button
                       type="button"

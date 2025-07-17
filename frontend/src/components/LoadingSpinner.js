@@ -1,45 +1,88 @@
 import React from 'react';
+import './LoadingSpinner.css';
 
-const LoadingSpinner = ({ size = 'medium', text = 'Loading...', color = '#667eea' }) => {
-  const sizeMap = {
-    small: { width: '16px', height: '16px', fontSize: '0.8rem' },
-    medium: { width: '24px', height: '24px', fontSize: '0.9rem' },
-    large: { width: '32px', height: '32px', fontSize: '1rem' }
+const LoadingSpinner = ({ 
+  size = 'medium', 
+  text = 'Loading...', 
+  variant = 'spinner',
+  className = '',
+  showText = true 
+}) => {
+  const sizeClasses = {
+    small: 'loading-spinner--small',
+    medium: 'loading-spinner--medium',
+    large: 'loading-spinner--large'
   };
 
-  const spinnerSize = sizeMap[size] || sizeMap.medium;
+  const sizeClass = sizeClasses[size] || sizeClasses.medium;
 
+  if (variant === 'skeleton') {
+    return <SkeletonLoader size={size} className={className} />;
+  }
+
+  if (variant === 'dots') {
+    return <DotsLoader size={size} text={text} showText={showText} className={className} />;
+  }
+
+  if (variant === 'pulse') {
+    return <PulseLoader size={size} text={text} showText={showText} className={className} />;
+  }
+
+  // Default spinner variant
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '0.5rem',
-      justifyContent: 'center'
-    }}>
-      <div
-        style={{
-          width: spinnerSize.width,
-          height: spinnerSize.height,
-          border: `2px solid #e2e8f0`,
-          borderTop: `2px solid ${color}`,
-          borderRadius: '50%',
-          animation: 'spin 1s linear infinite'
-        }}
-      />
-      {text && (
-        <span style={{ 
-          fontSize: spinnerSize.fontSize, 
-          color: '#64748b' 
-        }}>
-          {text}
-        </span>
+    <div className={`loading-spinner ${sizeClass} ${className}`}>
+      <div className="loading-spinner__circle">
+        <div className="loading-spinner__inner"></div>
+      </div>
+      {showText && text && (
+        <span className="loading-spinner__text">{text}</span>
       )}
-      <style jsx>{`
-        @keyframes spin {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
-        }
-      `}</style>
+    </div>
+  );
+};
+
+// Skeleton loader for content placeholders
+const SkeletonLoader = ({ size, className }) => {
+  const skeletonClass = `skeleton-loader skeleton-loader--${size}`;
+  
+  return (
+    <div className={`${skeletonClass} ${className}`}>
+      <div className="skeleton-loader__line skeleton-loader__line--title"></div>
+      <div className="skeleton-loader__line skeleton-loader__line--subtitle"></div>
+      <div className="skeleton-loader__line skeleton-loader__line--content"></div>
+      <div className="skeleton-loader__line skeleton-loader__line--content skeleton-loader__line--short"></div>
+    </div>
+  );
+};
+
+// Dots loader for subtle loading states
+const DotsLoader = ({ size, text, showText, className }) => {
+  const sizeClass = `dots-loader--${size}`;
+  
+  return (
+    <div className={`dots-loader ${sizeClass} ${className}`}>
+      <div className="dots-loader__container">
+        <div className="dots-loader__dot"></div>
+        <div className="dots-loader__dot"></div>
+        <div className="dots-loader__dot"></div>
+      </div>
+      {showText && text && (
+        <span className="dots-loader__text">{text}</span>
+      )}
+    </div>
+  );
+};
+
+// Pulse loader for button loading states
+const PulseLoader = ({ size, text, showText, className }) => {
+  const sizeClass = `pulse-loader--${size}`;
+  
+  return (
+    <div className={`pulse-loader ${sizeClass} ${className}`}>
+      <div className="pulse-loader__circle"></div>
+      {showText && text && (
+        <span className="pulse-loader__text">{text}</span>
+      )}
     </div>
   );
 };
